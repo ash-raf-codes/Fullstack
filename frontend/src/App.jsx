@@ -1,59 +1,25 @@
-import { useState, useEffect, use } from 'react'
-import ContactList from './ContactList.jsx'
-import ContactForm from './ContactForm.jsx'
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
+import Home from './pages/Home'
+import Contacts from './pages/Contacts'
 import './App.css'
 
 function App() {
-
-  const [contacts, setContacts] = useState([])
-
-  const [isModalOpen, setIsModalOpen] = useState(false)
-
-  const [currentContact, setCurrentContact] = useState({})
-
-  useEffect(() => {
-    fetchContacts()
-  }, [])
-
-  const fetchContacts = async () => {
-    const response = await fetch('http://localhost:5000/contacts')
-    const data = await response.json()
-    setContacts(data.contacts)
-    console.log(data.contacts)
-  }
-
-  const closeModal = () => {
-    setIsModalOpen(false)
-    setCurrentContact({})
-  }
-
-  const openCreateModal = () => {
-    if (!isModalOpen) setIsModalOpen(true)
-  }
-
-  const openEditModal = (contact) => {
-    if (isModalOpen) return
-    setCurrentContact(contact)
-    setIsModalOpen(true)
-  }
-
-  const onUpdate = () => {
-    closeModal()
-    fetchContacts()
-  }
-
   return (
-      <> 
-        <ContactList contacts={contacts} updateContact={openEditModal} updateCallBack={onUpdate}/>
-        <button onClick={openCreateModal}>Create New Contact</button>
-        { isModalOpen && <div className="modal">
-            <div className="modal-content">
-                <span className="close" onClick={closeModal}>&times;</span>
-                <ContactForm existingContact={currentContact} updateCallBack={onUpdate}/>
-          </div>
-        </div>
-        }
-    </>
+    <Router>
+      <div className="app">
+        <nav>
+          <ul>
+            <li><Link to="/">Home</Link></li>
+            <li><Link to="/contacts">Contacts</Link></li>
+          </ul>
+        </nav>
+
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/contacts" element={<Contacts />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
