@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useAuth0 } from '@auth0/auth0-react'
 import ContactList from '../components/ContactList'
 import ContactForm from '../components/ContactForm'
 
@@ -6,15 +7,26 @@ function Contacts() {
   const [contacts, setContacts] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentContact, setCurrentContact] = useState({})
+  const { getAccessTokenSilently } = useAuth0()
 
   useEffect(() => {
     fetchContacts()
   }, [])
 
   const fetchContacts = async () => {
-    const response = await fetch('http://localhost:5000/contacts')
-    const data = await response.json()
-    setContacts(data.contacts)
+    try {
+      const token = await getAccessTokenSilently()
+      const response = await fetch('http://localhost:5000/api/contacts', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      const data = await response.json()
+      setContacts(data)
+    } catch (error) {
+      console.error('Error fetching contacts:', error)
+    }
   }
 
   const closeModal = () => {
@@ -32,6 +44,25 @@ function Contacts() {
     setIsModalOpen(true)
   }
 
+  const createContact = async (contactData) => {
+    try {
+      const token = await getAccessTokenSilently()
+      const response = await fetch('http://localhost:5000/api/create_contact', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(contactData)
+      })
+      if (response.ok) {
+        fetchContacts() // Refresh the contact list
+      }
+    } catch (error) {
+      console.error('Error creating contact:', error)
+    }
+  }
+
   const onUpdate = () => {
     closeModal()
     fetchContacts()
@@ -45,7 +76,7 @@ function Contacts() {
       { isModalOpen && <div className="modal">
           <div className="modal-content">
               <span className="close" onClick={closeModal}>&times;</span>
-              <ContactForm existingContact={currentContact} updateCallBack={onUpdate}/>
+              <ContactForm existingContact={currentContact} updateCallBack={onUpdate} onSubmit={createContact}/>
           </div>
       </div>
       }
